@@ -1,0 +1,19 @@
+{
+  "name": "lector-albaranes-baldios",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Lector de albaranes: cliente, litros, fecha y hora de entrega, con OCR local opcional.",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "node scripts/serve.mjs"
+  },
+  "dependencies": {
+    "pdfjs-dist": "5.6.205",
+    "tesseract.js": "7.0.0",
+    "tesseract.js-core": "7.0.0"
+  }
+}

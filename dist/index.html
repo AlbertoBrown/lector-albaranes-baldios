@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1238b4">
+  <meta name="description" content="Extrae cliente, litros, fecha y hora de entrega de tus albaranes. Lectura directa de PDF, OCR local opcional y revisión manual.">
+  <title>Scanlitros · Lector de albaranes</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231238b4'/%3E%3Cpath d='M7 12V7h5m8 0h5v5M7 20v5h5m8 0h5v-5M10 16h12' fill='none' stroke='white' stroke-width='2.5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Scanlitros, inicio"><span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8V4h4m8 0h4v4M4 16v4h4m8 0h4v-4M7 12h10"/></svg></span>scanlitros<span class="brand-tag">LOS BALDÍOS</span></a>
+    <span class="privacy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v5c0 5 8 10 8 10s8-5 8-10V6zM8 12l3 3 5-6"/></svg>En tu dispositivo</span>
+  </header>
+  <main>
+    <div class="heading"><div><p class="eyebrow">LECTOR DE NOTAS DE ENTREGA</p><h1>Los datos de tu entrega, a la vista.</h1><p class="intro">Cliente, litros, fecha y hora. Abre el documento, revisa y descarga el resultado.</p></div><span class="mode-tag">PDF · JPG · PNG · WEBP</span></div>
+    <div class="workspace">
+      <section class="document-panel" aria-labelledby="doc-heading">
+        <div class="panel-heading"><h2 id="doc-heading"><span class="step">01</span> Documento</h2><button id="change-file" class="text-button" type="button">Abrir archivo <span aria-hidden="true">↗</span></button></div>
+        <input id="file-input" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" class="visually-hidden" tabindex="-1">
+        <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Seleccionar PDF o fotografía, o arrastrar un archivo aquí">
+          <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M16 7H9a2 2 0 0 0-2 2v7m25-9h7a2 2 0 0 1 2 2v7M7 32v7a2 2 0 0 0 2 2h7m16 0h7a2 2 0 0 0 2-2v-7M24 33V16m-7 7 7-7 7 7"/></svg></span>
+          <strong>Arrastra aquí tu albarán</strong><span>o pulsa para elegir un archivo</span><span class="file-hint">PDF o fotografía · Hasta 25 MB</span>
+          <span class="upload-button">Seleccionar documento</span>
+        </div>
+        <div id="document-view" hidden>
+          <div class="filebar"><span id="file-name"></span><span id="file-size"></span></div>
+          <div class="viewer-tools"><div class="page-control"><button id="prev-page" class="icon-button" aria-label="Página anterior" type="button">‹</button><span id="page-number">Página 1 de 1</span><button id="next-page" class="icon-button" aria-label="Página siguiente" type="button">›</button></div><div class="zoom-control"><button id="zoom-out" class="icon-button" aria-label="Reducir documento" type="button">−</button><span id="zoom-label">100 %</span><button id="zoom-in" class="icon-button" aria-label="Ampliar documento" type="button">+</button><button id="rotate" class="icon-button" aria-label="Girar documento 90 grados" title="Girar 90 grados" type="button">↻</button></div></div>
+          <div class="canvas-scroll" id="canvas-scroll"><div id="canvas-wrap"><canvas id="document-canvas" aria-label="Vista previa del documento"></canvas><div id="highlights" aria-hidden="true"></div></div></div>
+          <div class="document-caption"><span class="legend-name"></span>Cliente <span class="legend-liters"></span>Litros <span class="legend-delivery"></span>Fecha y hora</div>
+        </div>
+        <div class="processing" id="processing" hidden><div class="processing-top"><span id="processing-label">Leyendo documento…</span><button id="cancel" class="text-button" type="button">Cancelar</button></div><progress id="progress" max="100" value="0" aria-label="Progreso de lectura"></progress></div>
+        <div class="document-footer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10h14v10H5zM8 10V7a4 4 0 0 1 8 0v3"/></svg>El documento se procesa aquí, sin subirlo a un servidor.</div>
+      </section>
+      <aside class="result-panel" aria-labelledby="result-heading">
+        <div class="panel-heading"><h2 id="result-heading"><span class="step">02</span> Revisa los datos</h2><span id="result-badge" class="badge">Sin documento</span></div>
+        <div class="result-body">
+          <label class="field-label" for="reading-mode">Método de lectura</label>
+          <select id="reading-mode"><option value="pdf">PDF con texto · sin OCR ni IA</option><option value="auto">Automática + OCR local para fotos</option><option value="manual">Introducir datos manualmente</option></select>
+          <div id="status" class="status" role="status" aria-live="polite">Empieza seleccionando una nota de entrega.</div>
+          <form id="result-form">
+            <div class="field"><label for="client">Nombre del cliente <span class="field-key">DESTINATARIO</span></label><textarea id="client" rows="2" placeholder="Nombre o razón social" autocomplete="off" spellcheck="false" maxlength="200"></textarea><p id="client-source" class="source-hint">Se toma el destinatario, no la persona que firma.</p></div>
+            <div class="field"><label for="liters">Litros <span class="field-key">CANTIDAD</span></label><div class="liters-input"><input id="liters" type="text" inputmode="decimal" placeholder="0" autocomplete="off" maxlength="24"><span>L</span></div><p id="liters-source" class="source-hint">Cantidad del producto en litros, sin duplicados.</p></div>
+            <div class="delivery-fields">
+              <div class="field"><label for="delivery-date">Fecha de entrega</label><input id="delivery-date" class="delivery-input" type="date" min="1000-01-01" max="9999-12-31" aria-describedby="delivery-source" autocomplete="off"></div>
+              <div class="field"><label for="delivery-time">Hora de entrega</label><input id="delivery-time" class="delivery-input" type="time" step="1" aria-describedby="delivery-source" autocomplete="off"></div>
+            </div>
+            <p id="delivery-source" class="source-hint delivery-source">Se toma la fecha y la hora del apartado (6g).</p>
+            <p id="validation" class="validation" role="alert" hidden></p>
+            <label class="review-check"><input type="checkbox" id="reviewed"><span>He revisado el cliente, los litros, la fecha y la hora.</span></label>
+            <button id="download" class="primary-button" type="submit" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg>Descargar CSV</button>
+            <button id="copy" class="secondary-button" type="button" disabled>Copiar los datos</button>
+          </form>
+          <div class="manual-note"><strong>Siempre puedes corregirlos.</strong><p>Los campos son editables. Confirma los datos antes de utilizarlos.</p></div>
+        </div>
+      </aside>
+    </div>
+    <details id="text-details" class="text-details" hidden><summary>Ver texto extraído de esta página <span>Para comprobar la lectura</span></summary><pre id="raw-text"></pre></details>
+    <div class="bottom-note"><p><strong>Para tus notas de entrega.</strong> Lee «(4c) Nombre», «(5b) Cantidad» y «(6g) Fecha de entrega».</p><p>PDF con texto: sin IA. Fotos y escaneos: OCR local opcional.</p></div>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <noscript>Activa JavaScript para abrir y leer documentos. Los archivos se procesan en tu dispositivo.</noscript>
+</body>
+</html>
